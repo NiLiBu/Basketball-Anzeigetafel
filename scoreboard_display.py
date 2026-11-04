@@ -14,7 +14,7 @@ class Scoreboard_Display(QtWidgets.QWidget):
         self.points_home = QtWidgets.QLabel("0", alignment=QtCore.Qt.AlignCenter)
         self.points_home.setStyleSheet(self.style_points)
         self.points_home_label = QtWidgets.QLabel(
-            "Points Home", alignment=QtCore.Qt.AlignCenter
+            "Towers", alignment=QtCore.Qt.AlignCenter
         )
         self.points_home_label.setStyleSheet(self.style_label)
         self.points_home_layout = QtWidgets.QVBoxLayout()
@@ -25,7 +25,7 @@ class Scoreboard_Display(QtWidgets.QWidget):
         self.points_away = QtWidgets.QLabel("0", alignment=QtCore.Qt.AlignCenter)
         self.points_away.setStyleSheet(self.style_points)
         self.points_away_label = QtWidgets.QLabel(
-            "Points Away", alignment=QtCore.Qt.AlignCenter
+            "Gegner", alignment=QtCore.Qt.AlignCenter
         )
         self.points_away_label.setStyleSheet(self.style_label)
         self.points_away_layout = QtWidgets.QVBoxLayout()
@@ -36,7 +36,7 @@ class Scoreboard_Display(QtWidgets.QWidget):
         self.fouls_home = QtWidgets.QLabel("0", alignment=QtCore.Qt.AlignCenter)
         self.fouls_home.setStyleSheet(self.style_fouls)
         self.fouls_home_label = QtWidgets.QLabel(
-            "Fouls Home", alignment=QtCore.Qt.AlignCenter
+            "Foul", alignment=QtCore.Qt.AlignCenter
         )
         self.fouls_home_label.setStyleSheet(self.style_label)
         self.fouls_home_layout = QtWidgets.QVBoxLayout()
@@ -47,7 +47,7 @@ class Scoreboard_Display(QtWidgets.QWidget):
         self.fouls_away = QtWidgets.QLabel("0", alignment=QtCore.Qt.AlignCenter)
         self.fouls_away.setStyleSheet(self.style_fouls)
         self.fouls_away_label = QtWidgets.QLabel(
-            "Fouls Away", alignment=QtCore.Qt.AlignCenter
+            "Foul", alignment=QtCore.Qt.AlignCenter
         )
         self.fouls_away_label.setStyleSheet(self.style_label)
         self.fouls_away_layout = QtWidgets.QVBoxLayout()
@@ -57,7 +57,7 @@ class Scoreboard_Display(QtWidgets.QWidget):
 
         self.time = QtWidgets.QLabel("00:00.0", alignment=QtCore.Qt.AlignCenter)
         self.time.setStyleSheet(self.style_time)
-        self.time_label = QtWidgets.QLabel("Time", alignment=QtCore.Qt.AlignCenter)
+        self.time_label = QtWidgets.QLabel("", alignment=QtCore.Qt.AlignCenter)
         self.time_label.setStyleSheet(self.style_label)
         self.time_layout = QtWidgets.QVBoxLayout()
         self.time_layout.addWidget(self.time_label)
@@ -67,7 +67,7 @@ class Scoreboard_Display(QtWidgets.QWidget):
         self.quarter = QtWidgets.QLabel("1", alignment=QtCore.Qt.AlignCenter)
         self.quarter.setStyleSheet(self.style_quarter)
         self.quarter_label = QtWidgets.QLabel(
-            "Quarter", alignment=QtCore.Qt.AlignCenter
+            "Viertel", alignment=QtCore.Qt.AlignCenter
         )
         self.quarter_label.setStyleSheet(self.style_label)
         self.quarter_layout = QtWidgets.QVBoxLayout()
