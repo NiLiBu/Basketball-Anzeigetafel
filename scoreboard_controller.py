@@ -7,16 +7,25 @@ from time_dialog import TimeDialog
 class Scoreboard_Controller(QtWidgets.QWidget):
     timeChanged = QtCore.Signal(QtCore.QTime)
 
-    KEY_POINTS_HOME_UP = "W"
-    KEY_POINTS_HOME_DOWN = "S"
-    KEY_POINTS_AWAY_UP = "I"
-    KEY_POINTS_AWAY_DOWN = "K"
-    KEY_FOULS_HOME_UP = "E"
-    KEY_FOULS_HOME_DOWN = "D"
-    KEY_FOULS_AWAY_UP = "O"
-    KEY_FOULS_AWAY_DOWN = "L"
+    KEY_POINTS_HOME_DOWN = "Q"
+    KEY_POINTS_HOME_1 = "1"
+    KEY_POINTS_HOME_2 = "2"
+    KEY_POINTS_HOME_3 = "3"
+
+    KEY_POINTS_AWAY_DOWN = "O"
+    KEY_POINTS_AWAY_1 = "0"
+    KEY_POINTS_AWAY_2 = "9"
+    KEY_POINTS_AWAY_3 = "8"
+
+    KEY_FOULS_HOME_UP = "Y"
+    KEY_FOULS_HOME_DOWN = "X"
+
+    KEY_FOULS_AWAY_UP = "N"
+    KEY_FOULS_AWAY_DOWN = "M"
+
     KEY_TIME_UP = "Up"
     KEY_TIME_DOWN = "Down"
+
     KEY_TIMER_START_STOP = "Space"
     KEY_TIMER_STOP = "Escape"
 
@@ -57,12 +66,28 @@ class Scoreboard_Controller(QtWidgets.QWidget):
         self.quarter.setFocusPolicy(QtCore.Qt.NoFocus)
 
         self._shortcuts = []
-        self._add_shortcut(self.KEY_POINTS_HOME_UP, self.points_home.stepUp)
         self._add_shortcut(self.KEY_POINTS_HOME_DOWN, self.points_home.stepDown)
-        self._add_shortcut(self.KEY_POINTS_AWAY_UP, self.points_away.stepUp)
+        self._add_shortcut(self.KEY_POINTS_HOME_1, self.points_home.stepUp)
+        self._add_shortcut(
+            self.KEY_POINTS_HOME_2,
+            lambda: self._add_points(self.points_home, 2),
+        )
+        self._add_shortcut(
+            self.KEY_POINTS_HOME_3,
+            lambda: self._add_points(self.points_home, 3),
+        )
         self._add_shortcut(self.KEY_POINTS_AWAY_DOWN, self.points_away.stepDown)
-        self._add_shortcut(self.KEY_FOULS_HOME_UP, self.fouls_home.stepUp)
+        self._add_shortcut(self.KEY_POINTS_AWAY_1, self.points_away.stepUp)
+        self._add_shortcut(
+            self.KEY_POINTS_AWAY_2,
+            lambda: self._add_points(self.points_away, 2),
+        )
+        self._add_shortcut(
+            self.KEY_POINTS_AWAY_3,
+            lambda: self._add_points(self.points_away, 3),
+        )
         self._add_shortcut(self.KEY_FOULS_HOME_DOWN, self.fouls_home.stepDown)
+        self._add_shortcut(self.KEY_FOULS_HOME_UP, self.fouls_home.stepUp)
         self._add_shortcut(self.KEY_FOULS_AWAY_UP, self.fouls_away.stepUp)
         self._add_shortcut(self.KEY_FOULS_AWAY_DOWN, self.fouls_away.stepDown)
         self._add_shortcut(self.KEY_TIME_UP, lambda: self._change_time(100))
@@ -82,24 +107,28 @@ class Scoreboard_Controller(QtWidgets.QWidget):
         controls_layout = QtWidgets.QFormLayout(controls)
         controls_layout.addRow(
             "Points Home",
-            self._control_buttons(
-                "+1",
-                "-1",
-                self.points_home.stepUp,
+            self._points_control_buttons(
                 self.points_home.stepDown,
-                self.KEY_POINTS_HOME_UP,
+                lambda: self._add_points(self.points_home, 1),
+                lambda: self._add_points(self.points_home, 2),
+                lambda: self._add_points(self.points_home, 3),
                 self.KEY_POINTS_HOME_DOWN,
+                self.KEY_POINTS_HOME_1,
+                self.KEY_POINTS_HOME_2,
+                self.KEY_POINTS_HOME_3,
             ),
         )
         controls_layout.addRow(
             "Points Away",
-            self._control_buttons(
-                "+1",
-                "-1",
-                self.points_away.stepUp,
+            self._points_control_buttons(
                 self.points_away.stepDown,
-                self.KEY_POINTS_AWAY_UP,
+                lambda: self._add_points(self.points_away, 1),
+                lambda: self._add_points(self.points_away, 2),
+                lambda: self._add_points(self.points_away, 3),
                 self.KEY_POINTS_AWAY_DOWN,
+                self.KEY_POINTS_AWAY_1,
+                self.KEY_POINTS_AWAY_2,
+                self.KEY_POINTS_AWAY_3,
             ),
         )
         controls_layout.addRow(
@@ -109,8 +138,8 @@ class Scoreboard_Controller(QtWidgets.QWidget):
                 "-1",
                 self.fouls_home.stepUp,
                 self.fouls_home.stepDown,
-                self.KEY_FOULS_HOME_UP,
                 self.KEY_FOULS_HOME_DOWN,
+                self.KEY_FOULS_HOME_UP,
             ),
         )
         controls_layout.addRow(
@@ -120,8 +149,8 @@ class Scoreboard_Controller(QtWidgets.QWidget):
                 "-1",
                 self.fouls_away.stepUp,
                 self.fouls_away.stepDown,
-                self.KEY_FOULS_AWAY_UP,
                 self.KEY_FOULS_AWAY_DOWN,
+                self.KEY_FOULS_AWAY_UP,
             ),
         )
         controls_layout.addRow(
@@ -162,6 +191,32 @@ class Scoreboard_Controller(QtWidgets.QWidget):
         )
 
     @staticmethod
+    def _points_control_buttons(
+        minus_one,
+        plus_one,
+        plus_two,
+        plus_three,
+        minus_one_key,
+        plus_one_key,
+        plus_two_key,
+        plus_three_key,
+    ):
+        widget = QtWidgets.QWidget()
+        button_layout = QtWidgets.QHBoxLayout(widget)
+        button_layout.setContentsMargins(0, 0, 0, 0)
+
+        for text, callback, key in (
+            ("-1", minus_one, minus_one_key),
+            ("+1", plus_one, plus_one_key),
+            ("+2", plus_two, plus_two_key),
+            ("+3", plus_three, plus_three_key),
+        ):
+            button = QtWidgets.QPushButton(f"{text} ({key})")
+            button.clicked.connect(callback)
+            button_layout.addWidget(button)
+        return widget
+
+    @staticmethod
     def _control_buttons(
         first_text, second_text, first_callback, second_callback, first_key, second_key
     ):
@@ -176,6 +231,10 @@ class Scoreboard_Controller(QtWidgets.QWidget):
         button_layout.addWidget(first_button)
         button_layout.addWidget(second_button)
         return widget
+
+    @staticmethod
+    def _add_points(spinbox, points):
+        spinbox.setValue(spinbox.value() + points)
 
     def _change_time(self, milliseconds):
         current = self.time_dialog.time.time()
