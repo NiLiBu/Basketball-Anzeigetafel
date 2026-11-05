@@ -9,6 +9,12 @@ from time_dialog import TimeDialog
 
 class Scoreboard_Controller(QtWidgets.QWidget):
     timeChanged = QtCore.Signal(QtCore.QTime)
+    pointsHomeChanged = QtCore.Signal(int)
+    pointsAwayChanged = QtCore.Signal(int)
+    foulsHomeChanged = QtCore.Signal(str)
+    foulsAwayChanged = QtCore.Signal(str)
+    timeoutChanged = QtCore.Signal(str)
+    quarterChanged = QtCore.Signal(str)
 
     KEY_POINTS_HOME_DOWN = "Q"
     KEY_POINTS_HOME_1 = "1"
@@ -40,20 +46,24 @@ class Scoreboard_Controller(QtWidgets.QWidget):
         self.points_home.setRange(0, 999)
         self.set_line_edit_selection_color(self.points_home.lineEdit())
         self.points_home.setFocusPolicy(QtCore.Qt.NoFocus)
+        self.points_home.valueChanged.connect(self.pointsHomeChanged)
         self.points_away = QtWidgets.QSpinBox()
         self.points_away.setRange(0, 999)
         self.set_line_edit_selection_color(self.points_away.lineEdit())
         self.points_away.setFocusPolicy(QtCore.Qt.NoFocus)
+        self.points_away.valueChanged.connect(self.pointsAwayChanged)
         self.fouls_home = CustomSpinBox()
         self.set_line_edit_selection_color(self.fouls_home.lineEdit())
         self.fouls_home.addItems(["0", "1", "2", "3", "4", "🟥"])
         self.set_fouls_home(0)
         self.fouls_home.setFocusPolicy(QtCore.Qt.NoFocus)
+        self.fouls_home.currentTextChanged.connect(self.foulsHomeChanged)
         self.fouls_away = CustomSpinBox()
         self.set_line_edit_selection_color(self.fouls_away.lineEdit())
         self.fouls_away.addItems(["0", "1", "2", "3", "4", "🟥"])
         self.set_fouls_away(0)
         self.fouls_away.setFocusPolicy(QtCore.Qt.NoFocus)
+        self.fouls_away.currentTextChanged.connect(self.foulsAwayChanged)
         self.time = QtWidgets.QPushButton("00:00.0")
         self.timeout = QtWidgets.QPushButton("00:00.0")
         self.timeout_time = QtCore.QTime(0, 0, 0, 0)
@@ -97,6 +107,7 @@ class Scoreboard_Controller(QtWidgets.QWidget):
         self.quarter.addItems(["1", "2", "HT", "3", "4", "E"])
         self.set_quarter("1")
         self.quarter.setFocusPolicy(QtCore.Qt.NoFocus)
+        self.quarter.currentTextChanged.connect(self.quarterChanged)
 
         self._shortcuts = []
         self._add_shortcut(
@@ -446,26 +457,31 @@ class Scoreboard_Controller(QtWidgets.QWidget):
             self._play_buzzer()
         else:
             self.timeout_time = self.timeout_time.addMSecs(-100)
-        self.timeout.setText(self.timeout_time.toString("mm:ss.z"))
+        self._set_timeout_text()
+
+    def _set_timeout_text(self):
+        text = self.timeout_time.toString("mm:ss.z")
+        self.timeout.setText(text)
+        self.timeoutChanged.emit(text)
 
     def _start_timeout(self):
         if not self.timeout_timer.isActive():
             self.timeout_time = QtCore.QTime(0, 1, 0, 0)
-            self.timeout.setText(self.timeout_time.toString("mm:ss.z"))
+            self._set_timeout_text()
             self.timeout_timer.start()
             self.timeout.setStyleSheet("background-color: lightgreen;")
 
     def _start_quarter_break(self):
         if not self.timeout_timer.isActive():
             self.timeout_time = QtCore.QTime(0, 2, 0, 0)
-            self.timeout.setText(self.timeout_time.toString("mm:ss.z"))
+            self._set_timeout_text()
             self.timeout_timer.start()
             self.timeout.setStyleSheet("background-color: lightgreen;")
 
     def _reset_timeout(self):
         self.timeout_timer.stop()
         self.timeout_time = QtCore.QTime(0, 0, 0, 0)
-        self.timeout.setText(self.timeout_time.toString("mm:ss.z"))
+        self._set_timeout_text()
         self.timeout.setStyleSheet("")
 
     def _play_buzzer(self):

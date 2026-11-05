@@ -2,6 +2,8 @@ from PySide6 import QtCore, QtWidgets, QtGui
 
 
 class CustomSpinBox(QtWidgets.QAbstractSpinBox):
+    currentTextChanged = QtCore.Signal(str)
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self._items = []
@@ -19,8 +21,13 @@ class CustomSpinBox(QtWidgets.QAbstractSpinBox):
             self.lineEdit().clear()
             return
 
-        self._index = max(0, min(index, len(self._items) - 1))
+        new_index = max(0, min(index, len(self._items) - 1))
+        if new_index == self._index:
+            return
+
+        self._index = new_index
         self.lineEdit().setText(self._items[self._index])
+        self.currentTextChanged.emit(self.currentText())
 
     def currentIndex(self):
         return self._index

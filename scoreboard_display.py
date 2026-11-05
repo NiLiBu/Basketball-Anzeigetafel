@@ -55,6 +55,18 @@ class Scoreboard_Display(QtWidgets.QWidget):
         self.fouls_away_layout.addWidget(self.fouls_away)
         self.fouls_away_layout.setContentsMargins(0, 0, 0, 0)
 
+        self.timeout = QtWidgets.QLabel("0", alignment=QtCore.Qt.AlignCenter)
+        self.timeout.setStyleSheet(self.style_time)
+        self.timeout_label = QtWidgets.QLabel(
+            "Timeout", alignment=QtCore.Qt.AlignCenter
+        )
+        self.timeout_label.setStyleSheet(self.style_label)
+        self.timeout_layout = QtWidgets.QVBoxLayout()
+        self.timeout_layout.addWidget(self.timeout_label)
+        self.timeout_layout.addWidget(self.timeout)
+        self.timeout_layout.setContentsMargins(0, 0, 0, 0)
+        self._update_timeout_visibility()
+
         self.time = QtWidgets.QLabel("00:00.0", alignment=QtCore.Qt.AlignCenter)
         self.time.setStyleSheet(self.style_time)
         self.time_label = QtWidgets.QLabel("", alignment=QtCore.Qt.AlignCenter)
@@ -79,6 +91,7 @@ class Scoreboard_Display(QtWidgets.QWidget):
         self.top_layout.addLayout(self.points_away_layout, 0, 2)
         self.top_layout.addLayout(self.fouls_home_layout, 2, 0)
         self.top_layout.addLayout(self.fouls_away_layout, 2, 2)
+        self.top_layout.addLayout(self.timeout_layout, 2, 1)
         self.top_layout.addLayout(self.time_layout, 1, 1)
         self.top_layout.addLayout(self.quarter_layout, 0, 1)
         self._update_font_sizes()
@@ -99,6 +112,7 @@ class Scoreboard_Display(QtWidgets.QWidget):
             self.fouls_away_label,
             self.time_label,
             self.quarter_label,
+            self.timeout_label,
         ):
             label.setStyleSheet(f"{self.style_label} font-size: {label_size}px;")
 
@@ -109,5 +123,43 @@ class Scoreboard_Display(QtWidgets.QWidget):
             (self.fouls_away, self.style_fouls),
             (self.time, self.style_time),
             (self.quarter, self.style_quarter),
+            (self.timeout, self.style_time),
         ):
             value.setStyleSheet(f"{style} font-size: {value_size}px;")
+
+    def _update_timeout_visibility(self):
+        try:
+            visible = float(self.timeout.text()) > 0
+        except ValueError:
+            visible = bool(self.timeout.text().strip())
+        self.timeout.setVisible(visible)
+        self.timeout_label.setVisible(visible)
+
+    @QtCore.Slot(int)
+    def set_points_home(self, value):
+        self.points_home.setText(str(value))
+
+    @QtCore.Slot(int)
+    def set_points_away(self, value):
+        self.points_away.setText(str(value))
+
+    @QtCore.Slot(str)
+    def set_fouls_home(self, value):
+        self.fouls_home.setText(value)
+
+    @QtCore.Slot(str)
+    def set_fouls_away(self, value):
+        self.fouls_away.setText(value)
+
+    @QtCore.Slot(QtCore.QTime)
+    def set_time(self, value):
+        self.time.setText(value.toString("mm:ss.z"))
+
+    @QtCore.Slot(str)
+    def set_timeout(self, value):
+        self.timeout.setText(value)
+        self._update_timeout_visibility()
+
+    @QtCore.Slot(str)
+    def set_quarter(self, value):
+        self.quarter.setText(value)
