@@ -1,4 +1,6 @@
-from PySide6 import QtCore, QtGui, QtWidgets
+from pathlib import Path
+
+from PySide6 import QtCore, QtGui, QtMultimedia, QtWidgets
 
 from custum_spin_box import CustomSpinBox
 from update_quarter_dialog import UpdateQuarterDialog
@@ -56,6 +58,17 @@ class Scoreboard_Controller(QtWidgets.QWidget):
         self.timeout = QtWidgets.QPushButton("00:00.0")
         self.timeout_time = QtCore.QTime(0, 0, 0, 0)
         self.timeout.clicked.connect(self._start_timeout)
+        self.buzzer = QtWidgets.QPushButton("Buzzer")
+        self.buzzer_audio_output = QtMultimedia.QAudioOutput(self)
+        self.buzzer_audio_output.setVolume(1.0)
+        self.buzzer_player = QtMultimedia.QMediaPlayer(self)
+        self.buzzer_player.setAudioOutput(self.buzzer_audio_output)
+        self.buzzer_player.setSource(
+            QtCore.QUrl.fromLocalFile(
+                str(Path(__file__).resolve().with_name("Buzzer_Sound.mp3"))
+            )
+        )
+        self.buzzer.clicked.connect(self._play_buzzer)
 
         self.time_dialog = TimeDialog(QtCore.QTime(0, 0), self)
         self.time.clicked.connect(self.time_dialog.open)
@@ -236,6 +249,7 @@ class Scoreboard_Controller(QtWidgets.QWidget):
                 None,
             ),
         )
+        controls_layout.addRow("Buzzer", self.buzzer)
 
         layout.addRow(controls)
 
@@ -348,8 +362,9 @@ class Scoreboard_Controller(QtWidgets.QWidget):
         self.time_dialog.time.setTime(max(minimum, min(maximum, changed)))
 
     def _tick(self):
-        if self.time_dialog.time.time() == QtCore.QTime(0, 0, 0, 0):
-
+        if self.time_dialog.time.time() <= QtCore.QTime(0, 0, 0, 100):
+            self.set_time(QtCore.QTime(0, 0, 0, 0))
+            self._play_buzzer()
             self._stop_timer()
         elif self.time_dialog.time.time() > QtCore.QTime(0, 50, 0, 0):
 
@@ -363,6 +378,7 @@ class Scoreboard_Controller(QtWidgets.QWidget):
             self.timeout_time = QtCore.QTime(0, 0, 0, 0)
             self.timeout_timer.stop()
             self.timeout.setStyleSheet("")
+            self._play_buzzer()
         else:
             self.timeout_time = self.timeout_time.addMSecs(-100)
         self.timeout.setText(self.timeout_time.toString("mm:ss.z"))
@@ -386,6 +402,10 @@ class Scoreboard_Controller(QtWidgets.QWidget):
         self.timeout_time = QtCore.QTime(0, 0, 0, 0)
         self.timeout.setText(self.timeout_time.toString("mm:ss.z"))
         self.timeout.setStyleSheet("")
+
+    def _play_buzzer(self):
+        self.buzzer_player.setPosition(0)
+        self.buzzer_player.play()
 
     def _toggle_timer(self):
         if self.timer.isActive():
