@@ -10,8 +10,8 @@ class TimeDialog(QtWidgets.QDialog):
 
         self.time = QtWidgets.QTimeEdit(time)
         self.time.setDisplayFormat("mm:ss.z")
-        self.time.setMinimumTime(QtCore.QTime(0, 0))
-        self.time.setMaximumTime(QtCore.QTime(10, 0))
+        self.time.setMinimumTime(QtCore.QTime(0, 0, 0, 0))
+        self.time.setMaximumTime(QtCore.QTime(0, 10, 0, 0))
         self.close_button = QtWidgets.QPushButton("Close")
 
         layout = QtWidgets.QVBoxLayout(self)
