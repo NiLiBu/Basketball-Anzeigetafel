@@ -435,12 +435,13 @@ class Scoreboard_Controller(QtWidgets.QWidget):
                 self.set_fouls_away(0)
                 self.set_fouls_home(0)
                 self.set_time(QtCore.QTime(0, 10, 0, 0))
-                pass
+                self._start_quarter_break()
             case "2":
                 self.set_quarter("HT")
                 self.set_fouls_away(0)
                 self.set_fouls_home(0)
                 self.set_time(QtCore.QTime(0, 15, 0, 0))
+                self._start_timer()
             case "HT":
                 self.set_quarter("3")
                 self.set_fouls_away(0)
@@ -451,16 +452,19 @@ class Scoreboard_Controller(QtWidgets.QWidget):
                 self.set_fouls_away(0)
                 self.set_fouls_home(0)
                 self.set_time(QtCore.QTime(0, 10, 0, 0))
+                self._start_quarter_break()
             case "4":
                 self.set_quarter("E")
                 self.set_fouls_away(0)
                 self.set_fouls_home(0)
                 self.set_time(QtCore.QTime(0, 5, 0, 0))
+                self._start_quarter_break()
             case "E":
                 self.set_quarter("E")
                 self.set_fouls_away(0)
                 self.set_fouls_home(0)
                 self.set_time(QtCore.QTime(0, 5, 0, 0))
+                self._start_quarter_break()
 
     def _time_changed(self, time):
         self.time.setText(time.toString("mm:ss.z"))
