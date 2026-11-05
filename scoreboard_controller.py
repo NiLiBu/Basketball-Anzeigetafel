@@ -1,6 +1,7 @@
 from PySide6 import QtCore, QtGui, QtWidgets
 
-from CostumSpinBox import CustomSpinBox
+from custum_spin_box import CustomSpinBox
+from update_quarter_dialog import UpdateQuarterDialog
 from time_dialog import TimeDialog
 
 
@@ -55,6 +56,10 @@ class Scoreboard_Controller(QtWidgets.QWidget):
         self.time.clicked.connect(self.time_dialog.open)
         self.time_dialog.timeChanged.connect(self._time_changed)
 
+        self.quarter_end_dialog = UpdateQuarterDialog(self)
+        self.quarter_end_dialog.rejected.connect(self._reject_quarter_end)
+        self.quarter_end_dialog.accepted.connect(self._accept_quarter_end)
+
         self.timer = QtCore.QTimer(self)
         self.timer.setInterval(100)
         self.timer.timeout.connect(self._tick)
@@ -62,34 +67,58 @@ class Scoreboard_Controller(QtWidgets.QWidget):
         self.quarter = CustomSpinBox()
         self.set_line_edit_selection_color(self.quarter.lineEdit())
         self.quarter.addItems(["1", "2", "HT", "3", "4", "E"])
-        self.quarter.setCurrentIndex(0)
+        self.set_quarter("1")
         self.quarter.setFocusPolicy(QtCore.Qt.NoFocus)
 
         self._shortcuts = []
-        self._add_shortcut(self.KEY_POINTS_HOME_DOWN, self.points_home.stepDown)
-        self._add_shortcut(self.KEY_POINTS_HOME_1, self.points_home.stepUp)
+        self._add_shortcut(
+            self.KEY_POINTS_HOME_DOWN,
+            lambda: self.set_points_home(self.get_points_home() - 1),
+        )
+        self._add_shortcut(
+            self.KEY_POINTS_HOME_1,
+            lambda: self.set_points_home(self.get_points_home() + 1),
+        )
         self._add_shortcut(
             self.KEY_POINTS_HOME_2,
-            lambda: self._add_points(self.points_home, 2),
+            lambda: self._add_points(self.get_points_home, self.set_points_home, 2),
         )
         self._add_shortcut(
             self.KEY_POINTS_HOME_3,
-            lambda: self._add_points(self.points_home, 3),
+            lambda: self._add_points(self.get_points_home, self.set_points_home, 3),
         )
-        self._add_shortcut(self.KEY_POINTS_AWAY_DOWN, self.points_away.stepDown)
-        self._add_shortcut(self.KEY_POINTS_AWAY_1, self.points_away.stepUp)
+        self._add_shortcut(
+            self.KEY_POINTS_AWAY_DOWN,
+            lambda: self.set_points_away(self.get_points_away() - 1),
+        )
+        self._add_shortcut(
+            self.KEY_POINTS_AWAY_1,
+            lambda: self.set_points_away(self.get_points_away() + 1),
+        )
         self._add_shortcut(
             self.KEY_POINTS_AWAY_2,
-            lambda: self._add_points(self.points_away, 2),
+            lambda: self._add_points(self.get_points_away, self.set_points_away, 2),
         )
         self._add_shortcut(
             self.KEY_POINTS_AWAY_3,
-            lambda: self._add_points(self.points_away, 3),
+            lambda: self._add_points(self.get_points_away, self.set_points_away, 3),
         )
-        self._add_shortcut(self.KEY_FOULS_HOME_DOWN, self.fouls_home.stepDown)
-        self._add_shortcut(self.KEY_FOULS_HOME_UP, self.fouls_home.stepUp)
-        self._add_shortcut(self.KEY_FOULS_AWAY_UP, self.fouls_away.stepUp)
-        self._add_shortcut(self.KEY_FOULS_AWAY_DOWN, self.fouls_away.stepDown)
+        self._add_shortcut(
+            self.KEY_FOULS_HOME_DOWN,
+            lambda: self.set_fouls_home(self.get_fouls_home() - 1),
+        )
+        self._add_shortcut(
+            self.KEY_FOULS_HOME_UP,
+            lambda: self.set_fouls_home(self.get_fouls_home() + 1),
+        )
+        self._add_shortcut(
+            self.KEY_FOULS_AWAY_UP,
+            lambda: self.set_fouls_away(self.get_fouls_away() + 1),
+        )
+        self._add_shortcut(
+            self.KEY_FOULS_AWAY_DOWN,
+            lambda: self.set_fouls_away(self.get_fouls_away() - 1),
+        )
         self._add_shortcut(self.KEY_TIME_UP, lambda: self._change_time(100))
         self._add_shortcut(self.KEY_TIME_DOWN, lambda: self._change_time(-100))
         self._add_shortcut(self.KEY_TIMER_START_STOP, self._toggle_timer)
@@ -108,10 +137,10 @@ class Scoreboard_Controller(QtWidgets.QWidget):
         controls_layout.addRow(
             "Points Home",
             self._points_control_buttons(
-                self.points_home.stepDown,
-                lambda: self._add_points(self.points_home, 1),
-                lambda: self._add_points(self.points_home, 2),
-                lambda: self._add_points(self.points_home, 3),
+                lambda: self.set_points_home(self.get_points_home() - 1),
+                lambda: self._add_points(self.get_points_home, self.set_points_home, 1),
+                lambda: self._add_points(self.get_points_home, self.set_points_home, 2),
+                lambda: self._add_points(self.get_points_home, self.set_points_home, 3),
                 self.KEY_POINTS_HOME_DOWN,
                 self.KEY_POINTS_HOME_1,
                 self.KEY_POINTS_HOME_2,
@@ -121,10 +150,10 @@ class Scoreboard_Controller(QtWidgets.QWidget):
         controls_layout.addRow(
             "Points Away",
             self._points_control_buttons(
-                self.points_away.stepDown,
-                lambda: self._add_points(self.points_away, 1),
-                lambda: self._add_points(self.points_away, 2),
-                lambda: self._add_points(self.points_away, 3),
+                lambda: self.set_points_away(self.get_points_away() - 1),
+                lambda: self._add_points(self.get_points_away, self.set_points_away, 1),
+                lambda: self._add_points(self.get_points_away, self.set_points_away, 2),
+                lambda: self._add_points(self.get_points_away, self.set_points_away, 3),
                 self.KEY_POINTS_AWAY_DOWN,
                 self.KEY_POINTS_AWAY_1,
                 self.KEY_POINTS_AWAY_2,
@@ -136,8 +165,8 @@ class Scoreboard_Controller(QtWidgets.QWidget):
             self._control_buttons(
                 "+1",
                 "-1",
-                self.fouls_home.stepUp,
-                self.fouls_home.stepDown,
+                lambda: self.set_fouls_home(self.get_fouls_home() + 1),
+                lambda: self.set_fouls_home(self.get_fouls_home() - 1),
                 self.KEY_FOULS_HOME_DOWN,
                 self.KEY_FOULS_HOME_UP,
             ),
@@ -147,8 +176,8 @@ class Scoreboard_Controller(QtWidgets.QWidget):
             self._control_buttons(
                 "+1",
                 "-1",
-                self.fouls_away.stepUp,
-                self.fouls_away.stepDown,
+                lambda: self.set_fouls_away(self.get_fouls_away() + 1),
+                lambda: self.set_fouls_away(self.get_fouls_away() - 1),
                 self.KEY_FOULS_AWAY_DOWN,
                 self.KEY_FOULS_AWAY_UP,
             ),
@@ -176,6 +205,42 @@ class Scoreboard_Controller(QtWidgets.QWidget):
             ),
         )
         layout.addRow(controls)
+
+    def get_points_home(self):
+        return self.points_home.value()
+
+    def set_points_home(self, value):
+        self.points_home.setValue(value)
+
+    def get_points_away(self):
+        return self.points_away.value()
+
+    def set_points_away(self, value):
+        self.points_away.setValue(value)
+
+    def get_fouls_home(self):
+        return self.fouls_home.value()
+
+    def set_fouls_home(self, value):
+        self.fouls_home.setValue(value)
+
+    def get_fouls_away(self):
+        return self.fouls_away.value()
+
+    def set_fouls_away(self, value):
+        self.fouls_away.setValue(value)
+
+    def get_time(self):
+        return self.time_dialog.time.time()
+
+    def set_time(self, value):
+        self.time_dialog.time.setTime(value)
+
+    def get_quarter(self):
+        return self.quarter.currentText()
+
+    def set_quarter(self, value):
+        self.quarter.setCurrentText(str(value))
 
     def _add_shortcut(self, key, callback):
         shortcut = QtGui.QShortcut(QtGui.QKeySequence(key), self)
@@ -239,13 +304,18 @@ class Scoreboard_Controller(QtWidgets.QWidget):
     def _change_time(self, milliseconds):
         current = self.time_dialog.time.time()
         changed = current.addMSecs(milliseconds)
-        minimum = QtCore.QTime(0, 0)
-        maximum = QtCore.QTime(10, 0)
+        minimum = QtCore.QTime(0, 0, 0, 0)
+        maximum = QtCore.QTime(0, 50, 0, 0)
         self.time_dialog.time.setTime(max(minimum, min(maximum, changed)))
 
     def _tick(self):
-        if self.time_dialog.time.time() == QtCore.QTime(0, 0):
+        if self.time_dialog.time.time() == QtCore.QTime(0, 0, 0, 0):
+
             self._stop_timer()
+        elif self.time_dialog.time.time() > QtCore.QTime(0, 50, 0, 0):
+
+            self._stop_timer()
+            self.set_time(QtCore.QTime(0, 0, 0, 0))
         else:
             self.time_dialog.time.setTime(self.time_dialog.time.time().addMSecs(-100))
 
@@ -256,13 +326,53 @@ class Scoreboard_Controller(QtWidgets.QWidget):
             self._start_timer()
 
     def _start_timer(self):
-        if self.time_dialog.time.time() != QtCore.QTime(0, 0):
+        if self.time_dialog.time.time() != QtCore.QTime(0, 0, 0, 0):
             self.timer.start()
             self.time.setStyleSheet("background-color: lightgreen;")
 
     def _stop_timer(self):
         self.timer.stop()
         self.time.setStyleSheet("")
+        if self.time_dialog.time.time() == QtCore.QTime(0, 0, 0, 0):
+
+            self.quarter_end_dialog.show()
+
+    def _reject_quarter_end(self):
+        pass
+
+    def _accept_quarter_end(self):
+        match self.quarter.currentText():
+            case "1":
+                self.set_quarter("2")
+                self.set_fouls_away(0)
+                self.set_fouls_home(0)
+                self.set_time(QtCore.QTime(0, 10, 0, 0))
+                pass
+            case "2":
+                self.set_quarter("HT")
+                self.set_fouls_away(0)
+                self.set_fouls_home(0)
+                self.set_time(QtCore.QTime(0, 15, 0, 0))
+            case "HT":
+                self.set_quarter("3")
+                self.set_fouls_away(0)
+                self.set_fouls_home(0)
+                self.set_time(QtCore.QTime(0, 10, 0, 0))
+            case "3":
+                self.set_quarter("4")
+                self.set_fouls_away(0)
+                self.set_fouls_home(0)
+                self.set_time(QtCore.QTime(0, 10, 0, 0))
+            case "4":
+                self.set_quarter("E")
+                self.set_fouls_away(0)
+                self.set_fouls_home(0)
+                self.set_time(QtCore.QTime(0, 5, 0, 0))
+            case "E":
+                self.set_quarter("E")
+                self.set_fouls_away(0)
+                self.set_fouls_home(0)
+                self.set_time(QtCore.QTime(0, 5, 0, 0))
 
     def _time_changed(self, time):
         self.time.setText(time.toString("mm:ss.z"))
