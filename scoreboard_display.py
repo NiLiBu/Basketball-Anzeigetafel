@@ -14,7 +14,7 @@ class Scoreboard_Display(QtWidgets.QWidget):
         self.points_home = QtWidgets.QLabel("0", alignment=QtCore.Qt.AlignCenter)
         self.points_home.setStyleSheet(self.style_points)
         self.points_home_label = QtWidgets.QLabel(
-            "Towers", alignment=QtCore.Qt.AlignCenter
+            "Points Home", alignment=QtCore.Qt.AlignCenter
         )
         self.points_home_label.setStyleSheet(self.style_label)
         self.points_home_layout = QtWidgets.QVBoxLayout()
@@ -25,7 +25,7 @@ class Scoreboard_Display(QtWidgets.QWidget):
         self.points_away = QtWidgets.QLabel("0", alignment=QtCore.Qt.AlignCenter)
         self.points_away.setStyleSheet(self.style_points)
         self.points_away_label = QtWidgets.QLabel(
-            "Gegner", alignment=QtCore.Qt.AlignCenter
+            "Points Away", alignment=QtCore.Qt.AlignCenter
         )
         self.points_away_label.setStyleSheet(self.style_label)
         self.points_away_layout = QtWidgets.QVBoxLayout()
@@ -36,7 +36,7 @@ class Scoreboard_Display(QtWidgets.QWidget):
         self.fouls_home = QtWidgets.QLabel("0", alignment=QtCore.Qt.AlignCenter)
         self.fouls_home.setStyleSheet(self.style_fouls)
         self.fouls_home_label = QtWidgets.QLabel(
-            "Foul", alignment=QtCore.Qt.AlignCenter
+            "Fouls Home", alignment=QtCore.Qt.AlignCenter
         )
         self.fouls_home_label.setStyleSheet(self.style_label)
         self.fouls_home_layout = QtWidgets.QVBoxLayout()
@@ -47,7 +47,7 @@ class Scoreboard_Display(QtWidgets.QWidget):
         self.fouls_away = QtWidgets.QLabel("0", alignment=QtCore.Qt.AlignCenter)
         self.fouls_away.setStyleSheet(self.style_fouls)
         self.fouls_away_label = QtWidgets.QLabel(
-            "Foul", alignment=QtCore.Qt.AlignCenter
+            "Fouls Away", alignment=QtCore.Qt.AlignCenter
         )
         self.fouls_away_label.setStyleSheet(self.style_label)
         self.fouls_away_layout = QtWidgets.QVBoxLayout()
@@ -67,7 +67,7 @@ class Scoreboard_Display(QtWidgets.QWidget):
         self.quarter = QtWidgets.QLabel("1", alignment=QtCore.Qt.AlignCenter)
         self.quarter.setStyleSheet(self.style_quarter)
         self.quarter_label = QtWidgets.QLabel(
-            "Viertel", alignment=QtCore.Qt.AlignCenter
+            "Quarter", alignment=QtCore.Qt.AlignCenter
         )
         self.quarter_label.setStyleSheet(self.style_label)
         self.quarter_layout = QtWidgets.QVBoxLayout()

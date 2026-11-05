@@ -57,7 +57,13 @@ class Scoreboard_Controller(QtWidgets.QWidget):
         self.time = QtWidgets.QPushButton("00:00.0")
         self.timeout = QtWidgets.QPushButton("00:00.0")
         self.timeout_time = QtCore.QTime(0, 0, 0, 0)
-        self.timeout.clicked.connect(self._start_timeout)
+        self._history = QtWidgets.QListWidget()
+        self._history.setMinimumHeight(140)
+        self._history.setAlternatingRowColors(True)
+        self._history_clock = QtCore.QElapsedTimer()
+        self._history_clock.start()
+        self._history_group = None
+        self.timeout.clicked.connect(self._action("Timeout", self._start_timeout))
         self.buzzer = QtWidgets.QPushButton("Buzzer")
         self.buzzer_audio_output = QtMultimedia.QAudioOutput(self)
         self.buzzer_audio_output.setVolume(1.0)
@@ -68,7 +74,7 @@ class Scoreboard_Controller(QtWidgets.QWidget):
                 str(Path(__file__).resolve().with_name("Buzzer_Sound.mp3"))
             )
         )
-        self.buzzer.clicked.connect(self._play_buzzer)
+        self.buzzer.clicked.connect(self._action("Buzzer", self._play_buzzer))
 
         self.time_dialog = TimeDialog(QtCore.QTime(0, 0), self)
         self.time.clicked.connect(self.time_dialog.open)
@@ -96,34 +102,42 @@ class Scoreboard_Controller(QtWidgets.QWidget):
         self._add_shortcut(
             self.KEY_POINTS_HOME_DOWN,
             lambda: self.set_points_home(self.get_points_home() - 1),
+            "Points Home -1",
         )
         self._add_shortcut(
             self.KEY_POINTS_HOME_1,
             lambda: self.set_points_home(self.get_points_home() + 1),
+            "Points Home +1",
         )
         self._add_shortcut(
             self.KEY_POINTS_HOME_2,
             lambda: self._add_points(self.get_points_home, self.set_points_home, 2),
+            "Points Home +2",
         )
         self._add_shortcut(
             self.KEY_POINTS_HOME_3,
             lambda: self._add_points(self.get_points_home, self.set_points_home, 3),
+            "Points Home +3",
         )
         self._add_shortcut(
             self.KEY_POINTS_AWAY_DOWN,
             lambda: self.set_points_away(self.get_points_away() - 1),
+            "Points Away -1",
         )
         self._add_shortcut(
             self.KEY_POINTS_AWAY_1,
             lambda: self.set_points_away(self.get_points_away() + 1),
+            "Points Away +1",
         )
         self._add_shortcut(
             self.KEY_POINTS_AWAY_2,
             lambda: self._add_points(self.get_points_away, self.set_points_away, 2),
+            "Points Away +2",
         )
         self._add_shortcut(
             self.KEY_POINTS_AWAY_3,
             lambda: self._add_points(self.get_points_away, self.set_points_away, 3),
+            "Points Away +3",
         )
         self._add_shortcut(
             self.KEY_FOULS_HOME_DOWN,
@@ -154,6 +168,7 @@ class Scoreboard_Controller(QtWidgets.QWidget):
         layout.addRow("Time:", self.time)
         layout.addRow("Timeout:", self.timeout)
         layout.addRow("Quarter:", self.quarter)
+        layout.addRow("History:", self._history)
 
         controls = QtWidgets.QGroupBox("Controls")
         controls_layout = QtWidgets.QFormLayout(controls)
@@ -168,6 +183,7 @@ class Scoreboard_Controller(QtWidgets.QWidget):
                 self.KEY_POINTS_HOME_1,
                 self.KEY_POINTS_HOME_2,
                 self.KEY_POINTS_HOME_3,
+                "Points Home",
             ),
         )
         controls_layout.addRow(
@@ -181,6 +197,7 @@ class Scoreboard_Controller(QtWidgets.QWidget):
                 self.KEY_POINTS_AWAY_1,
                 self.KEY_POINTS_AWAY_2,
                 self.KEY_POINTS_AWAY_3,
+                "Points Away",
             ),
         )
         controls_layout.addRow(
@@ -241,7 +258,7 @@ class Scoreboard_Controller(QtWidgets.QWidget):
         controls_layout.addRow(
             "Quarter Break",
             self._control_buttons(
-                "Viertelpause",
+                "Quarter Break",
                 "Reset",
                 self._start_quarter_break,
                 self._reset_timeout,
@@ -289,21 +306,56 @@ class Scoreboard_Controller(QtWidgets.QWidget):
     def set_quarter(self, value):
         self.quarter.setCurrentText(str(value))
 
-    def _add_shortcut(self, key, callback):
+    def _add_shortcut(self, key, callback, description=None):
         shortcut = QtGui.QShortcut(QtGui.QKeySequence(key), self)
         shortcut.setContext(QtCore.Qt.WindowShortcut)
-        shortcut.activated.connect(callback)
+        shortcut.activated.connect(
+            self._action(description or f"Taste {key}", callback)
+        )
         self._shortcuts.append(shortcut)
 
+    def _action(self, description, callback):
+        def action():
+            self._add_history_entry(description)
+            callback()
+
+        return action
+
+    def _add_history_entry(self, description):
+        timer_time = self.get_time()
+        real_time = self._history_clock.elapsed()
+        group = self._history_group
+        same_group = group is not None and (
+            abs(group["timer"].msecsTo(timer_time)) <= 1000
+            or real_time - group["real"] <= 2000
+        )
+        if same_group:
+            group["actions"].append(description)
+            group["timer"] = timer_time
+            group["real"] = real_time
+            self._history.item(0).setText(self._history_text(group))
+        else:
+            group = {
+                "timer": timer_time,
+                "real": real_time,
+                "actions": [description],
+            }
+            self._history_group = group
+            self._history.insertItem(0, self._history_text(group))
+        self._history.scrollToTop()
+
     @staticmethod
-    def set_line_edit_selection_color(widget):
+    def _history_text(group):
+        return f"{group['timer'].toString('mm:ss.z')} – " + ", ".join(group["actions"])
+
+    def set_line_edit_selection_color(self, widget):
         """Set the selection color of a QLineEdit."""
         widget.setStyleSheet(
             "selection-background-color: white; selection-color: black"
         )
 
-    @staticmethod
     def _points_control_buttons(
+        self,
         minus_one,
         plus_one,
         plus_two,
@@ -312,6 +364,7 @@ class Scoreboard_Controller(QtWidgets.QWidget):
         plus_one_key,
         plus_two_key,
         plus_three_key,
+        description_prefix,
     ):
         widget = QtWidgets.QWidget()
         button_layout = QtWidgets.QHBoxLayout(widget)
@@ -324,13 +377,20 @@ class Scoreboard_Controller(QtWidgets.QWidget):
             ("+3", plus_three, plus_three_key),
         ):
             button = QtWidgets.QPushButton(f"{text} ({key})")
-            button.clicked.connect(callback)
+            button.clicked.connect(
+                self._action(f"{description_prefix} {text}", callback)
+            )
             button_layout.addWidget(button)
         return widget
 
-    @staticmethod
     def _control_buttons(
-        first_text, second_text, first_callback, second_callback, first_key, second_key
+        self,
+        first_text,
+        second_text,
+        first_callback,
+        second_callback,
+        first_key,
+        second_key,
     ):
         widget = QtWidgets.QWidget()
         button_layout = QtWidgets.QHBoxLayout(widget)
@@ -344,15 +404,20 @@ class Scoreboard_Controller(QtWidgets.QWidget):
             second_button = QtWidgets.QPushButton(second_text)
         else:
             second_button = QtWidgets.QPushButton(f"{second_text} ({second_key})")
-        first_button.clicked.connect(first_callback)
-        second_button.clicked.connect(second_callback)
+        first_button.clicked.connect(
+            self._action(f"{first_text} ({first_key})", first_callback)
+        )
+        second_button.clicked.connect(
+            self._action(f"{second_text} ({second_key})", second_callback)
+        )
         button_layout.addWidget(first_button)
         button_layout.addWidget(second_button)
         return widget
 
     @staticmethod
-    def _add_points(spinbox, points):
-        spinbox.setValue(spinbox.value() + points)
+    @staticmethod
+    def _add_points(get_points, set_points, points):
+        set_points(get_points() + points)
 
     def _change_time(self, milliseconds):
         current = self.time_dialog.time.time()
