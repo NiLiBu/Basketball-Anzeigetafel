@@ -42,15 +42,20 @@ class Scoreboard_Controller(QtWidgets.QWidget):
         self.points_away.setRange(0, 999)
         self.set_line_edit_selection_color(self.points_away.lineEdit())
         self.points_away.setFocusPolicy(QtCore.Qt.NoFocus)
-        self.fouls_home = QtWidgets.QSpinBox()
+        self.fouls_home = CustomSpinBox()
         self.set_line_edit_selection_color(self.fouls_home.lineEdit())
-        self.fouls_home.setRange(0, 5)
+        self.fouls_home.addItems(["0", "1", "2", "3", "4", "🟥"])
+        self.set_fouls_home(0)
         self.fouls_home.setFocusPolicy(QtCore.Qt.NoFocus)
-        self.fouls_away = QtWidgets.QSpinBox()
+        self.fouls_away = CustomSpinBox()
         self.set_line_edit_selection_color(self.fouls_away.lineEdit())
-        self.fouls_away.setRange(0, 5)
+        self.fouls_away.addItems(["0", "1", "2", "3", "4", "🟥"])
+        self.set_fouls_away(0)
         self.fouls_away.setFocusPolicy(QtCore.Qt.NoFocus)
         self.time = QtWidgets.QPushButton("00:00.0")
+        self.timeout = QtWidgets.QPushButton("00:00.0")
+        self.timeout_time = QtCore.QTime(0, 0, 0, 0)
+        self.timeout.clicked.connect(self._start_timeout)
 
         self.time_dialog = TimeDialog(QtCore.QTime(0, 0), self)
         self.time.clicked.connect(self.time_dialog.open)
@@ -63,6 +68,10 @@ class Scoreboard_Controller(QtWidgets.QWidget):
         self.timer = QtCore.QTimer(self)
         self.timer.setInterval(100)
         self.timer.timeout.connect(self._tick)
+
+        self.timeout_timer = QtCore.QTimer(self)
+        self.timeout_timer.setInterval(100)
+        self.timeout_timer.timeout.connect(self._tick_timeout)
 
         self.quarter = CustomSpinBox()
         self.set_line_edit_selection_color(self.quarter.lineEdit())
@@ -130,6 +139,7 @@ class Scoreboard_Controller(QtWidgets.QWidget):
         layout.addRow("Fouls Home:", self.fouls_home)
         layout.addRow("Fouls Away:", self.fouls_away)
         layout.addRow("Time:", self.time)
+        layout.addRow("Timeout:", self.timeout)
         layout.addRow("Quarter:", self.quarter)
 
         controls = QtWidgets.QGroupBox("Controls")
@@ -204,6 +214,29 @@ class Scoreboard_Controller(QtWidgets.QWidget):
                 self.KEY_TIMER_STOP,
             ),
         )
+        controls_layout.addRow(
+            "Timeout",
+            self._control_buttons(
+                "Timeout",
+                "Reset",
+                self._start_timeout,
+                self._reset_timeout,
+                None,
+                None,
+            ),
+        )
+        controls_layout.addRow(
+            "Quarter Break",
+            self._control_buttons(
+                "Viertelpause",
+                "Reset",
+                self._start_quarter_break,
+                self._reset_timeout,
+                None,
+                None,
+            ),
+        )
+
         layout.addRow(controls)
 
     def get_points_home(self):
@@ -219,16 +252,16 @@ class Scoreboard_Controller(QtWidgets.QWidget):
         self.points_away.setValue(value)
 
     def get_fouls_home(self):
-        return self.fouls_home.value()
+        return self.fouls_home.currentIndex()
 
     def set_fouls_home(self, value):
-        self.fouls_home.setValue(value)
+        self.fouls_home.setCurrentIndex(max(0, min(5, int(value))))
 
     def get_fouls_away(self):
-        return self.fouls_away.value()
+        return self.fouls_away.currentIndex()
 
     def set_fouls_away(self, value):
-        self.fouls_away.setValue(value)
+        self.fouls_away.setCurrentIndex(max(0, min(5, int(value))))
 
     def get_time(self):
         return self.time_dialog.time.time()
@@ -289,8 +322,14 @@ class Scoreboard_Controller(QtWidgets.QWidget):
         button_layout = QtWidgets.QHBoxLayout(widget)
         button_layout.setContentsMargins(0, 0, 0, 0)
 
-        first_button = QtWidgets.QPushButton(f"{first_text} ({first_key})")
-        second_button = QtWidgets.QPushButton(f"{second_text} ({second_key})")
+        if first_key is None:
+            first_button = QtWidgets.QPushButton(first_text)
+        else:
+            first_button = QtWidgets.QPushButton(f"{first_text} ({first_key})")
+        if second_key is None:
+            second_button = QtWidgets.QPushButton(second_text)
+        else:
+            second_button = QtWidgets.QPushButton(f"{second_text} ({second_key})")
         first_button.clicked.connect(first_callback)
         second_button.clicked.connect(second_callback)
         button_layout.addWidget(first_button)
@@ -318,6 +357,35 @@ class Scoreboard_Controller(QtWidgets.QWidget):
             self.set_time(QtCore.QTime(0, 0, 0, 0))
         else:
             self.time_dialog.time.setTime(self.time_dialog.time.time().addMSecs(-100))
+
+    def _tick_timeout(self):
+        if self.timeout_time <= QtCore.QTime(0, 0, 0, 100):
+            self.timeout_time = QtCore.QTime(0, 0, 0, 0)
+            self.timeout_timer.stop()
+            self.timeout.setStyleSheet("")
+        else:
+            self.timeout_time = self.timeout_time.addMSecs(-100)
+        self.timeout.setText(self.timeout_time.toString("mm:ss.z"))
+
+    def _start_timeout(self):
+        if not self.timeout_timer.isActive():
+            self.timeout_time = QtCore.QTime(0, 1, 0, 0)
+            self.timeout.setText(self.timeout_time.toString("mm:ss.z"))
+            self.timeout_timer.start()
+            self.timeout.setStyleSheet("background-color: lightgreen;")
+
+    def _start_quarter_break(self):
+        if not self.timeout_timer.isActive():
+            self.timeout_time = QtCore.QTime(0, 2, 0, 0)
+            self.timeout.setText(self.timeout_time.toString("mm:ss.z"))
+            self.timeout_timer.start()
+            self.timeout.setStyleSheet("background-color: lightgreen;")
+
+    def _reset_timeout(self):
+        self.timeout_timer.stop()
+        self.timeout_time = QtCore.QTime(0, 0, 0, 0)
+        self.timeout.setText(self.timeout_time.toString("mm:ss.z"))
+        self.timeout.setStyleSheet("")
 
     def _toggle_timer(self):
         if self.timer.isActive():
