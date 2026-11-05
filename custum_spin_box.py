@@ -28,6 +28,12 @@ class CustomSpinBox(QtWidgets.QAbstractSpinBox):
     def currentText(self):
         return self._items[self._index] if self._index >= 0 else ""
 
+    def setCurrentText(self, text):
+        if text in self._items:
+            self.setCurrentIndex(self._items.index(text))
+        else:
+            raise ValueError(f"Text '{text}' not found in items.")
+
     def stepBy(self, steps):
         self.setCurrentIndex(self._index + steps)
 
