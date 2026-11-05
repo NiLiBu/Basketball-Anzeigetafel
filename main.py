@@ -14,12 +14,12 @@ def main():
 
     controller = Scoreboard_Controller()
     controller.setWindowTitle("Scoreboard Controller")
-    controller.resize(300, 200)
+    controller.resize(500, 800)
     controller.show()
 
     widget = Scoreboard_Display()
     widget.setWindowTitle("Scoreboard Display")
-    widget.resize(400, 300)
+    widget.resize(600, 400)
     widget.show()
 
     controller.pointsHomeChanged.connect(widget.set_points_home)

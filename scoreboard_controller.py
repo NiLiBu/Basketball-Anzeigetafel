@@ -64,7 +64,7 @@ class Scoreboard_Controller(QtWidgets.QWidget):
         self.set_fouls_away(0)
         self.fouls_away.setFocusPolicy(QtCore.Qt.NoFocus)
         self.fouls_away.currentTextChanged.connect(self.foulsAwayChanged)
-        self.time = QtWidgets.QPushButton("00:00.0")
+        self.time = QtWidgets.QPushButton("10:00.0")
         self.timeout = QtWidgets.QPushButton("00:00.0")
         self.timeout_time = QtCore.QTime(0, 0, 0, 0)
         self._history = QtWidgets.QListWidget()
@@ -278,6 +278,8 @@ class Scoreboard_Controller(QtWidgets.QWidget):
             ),
         )
         controls_layout.addRow("Buzzer", self.buzzer)
+
+        self.set_time(QtCore.QTime(0, 10, 0, 0))
 
         layout.addRow(controls)
 

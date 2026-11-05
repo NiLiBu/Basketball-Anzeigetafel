@@ -67,7 +67,7 @@ class Scoreboard_Display(QtWidgets.QWidget):
         self.timeout_layout.setContentsMargins(0, 0, 0, 0)
         self._update_timeout_visibility()
 
-        self.time = QtWidgets.QLabel("00:00.0", alignment=QtCore.Qt.AlignCenter)
+        self.time = QtWidgets.QLabel("10:00.0", alignment=QtCore.Qt.AlignCenter)
         self.time.setStyleSheet(self.style_time)
         self.time_label = QtWidgets.QLabel("", alignment=QtCore.Qt.AlignCenter)
         self.time_label.setStyleSheet(self.style_label)
@@ -101,9 +101,9 @@ class Scoreboard_Display(QtWidgets.QWidget):
         self._update_font_sizes()
 
     def _update_font_sizes(self):
-        scale = min(self.width() / 300, self.height() / 200)
-        label_size = max(8, round(16 * scale))
-        value_size = max(12, round(24 * scale))
+        scale = min(self.width() / 400, self.height() / 300)
+        label_size = max(12, round(24 * scale))
+        value_size = max(30, round(45 * scale))
 
         for label in (
             self.points_home_label,
@@ -128,10 +128,11 @@ class Scoreboard_Display(QtWidgets.QWidget):
             value.setStyleSheet(f"{style} font-size: {value_size}px;")
 
     def _update_timeout_visibility(self):
-        try:
-            visible = float(self.timeout.text()) > 0
-        except ValueError:
-            visible = bool(self.timeout.text().strip())
+        timeout = QtCore.QTime.fromString(self.timeout.text(), "mm:ss.z")
+        if timeout.isValid():
+            visible = timeout != QtCore.QTime(0, 0, 0, 0)
+        else:
+            visible = self.timeout.text().strip() not in ("", "0", "0.0")
         self.timeout.setVisible(visible)
         self.timeout_label.setVisible(visible)
 
